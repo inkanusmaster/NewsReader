@@ -23,7 +23,7 @@ public class MainActivity extends AppCompatActivity {
     String urlArticlesID = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty";
     String urlNews = "https://hacker-news.firebaseio.com/v0/item/ENTERIDHERE.json?print=pretty";
     String[] id = new String[10];
-    boolean dlArticleIdEqualsTrue = true;
+    String[] urlArticleJSON = new String[10];
 
     @SuppressLint("StaticFieldLeak")
     public class DownloadTask extends AsyncTask<String, Void, String> {
@@ -33,8 +33,6 @@ public class MainActivity extends AppCompatActivity {
             URL url;
             HttpURLConnection urlConnection;
 
-//           PRZESLIJ DO ONPOSTEXECUTE ID ARTYKULOW
-//           A W ONPOSTEXECUTE OGARNIJ TE 10 ARTYKULOW Z ODPOWIEDNIM ID (REGEXP) I PARSUJ JSONA
             try {
                 url = new URL(urls[0]);
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -56,27 +54,25 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            if (dlArticleIdEqualsTrue) {
-                try {
-                    JSONArray jsonURLArticlesArray = new JSONArray(s);
-                    for (int i = 0; i < 10; i++) {
-                        id[i] = jsonURLArticlesArray.getString(i);
-                        System.out.println(id[i]);
+            try {
+                JSONArray jsonURLArticlesArray = new JSONArray(s);
+                for (int i = 0; i < 10; i++) {
+                    id[i] = jsonURLArticlesArray.getString(i);
+                    System.out.println("ID" + i + " : " + id[i]);
+
+                    Pattern p = Pattern.compile("item/(.*?)\\.json?");
+                    Matcher m = p.matcher(urlNews);
+                    if (m.find()) {
+                        urlNews = urlNews.replace(m.group(1), id[i]);
+                        urlArticleJSON[i] = urlNews;
+                        System.out.println("ID" + i + " : " + urlArticleJSON[i]);
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
 
-            } //else {
-//                try {
-//                    System.out.println("TEST ID[0] w else try " + id[0]);
-//                    JSONObject jsonNews = new JSONObject(s);
-//                    title = jsonNews.getString("title");
-//                    System.out.println(title);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
 
     }
