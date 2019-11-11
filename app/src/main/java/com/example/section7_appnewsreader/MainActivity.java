@@ -20,12 +20,10 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
-    String urlStoriesID = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty";
+    String urlArticlesID = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty";
     String urlNews = "https://hacker-news.firebaseio.com/v0/item/ENTERIDHERE.json?print=pretty";
-    String idStory, title, url;
     String[] id = new String[10];
-    //    String[] idCopy = new String[10];
-    boolean dlStoryIdEqualsTrue = true;
+    boolean dlArticleIdEqualsTrue = true;
 
     @SuppressLint("StaticFieldLeak")
     public class DownloadTask extends AsyncTask<String, Void, String> {
@@ -35,7 +33,8 @@ public class MainActivity extends AppCompatActivity {
             URL url;
             HttpURLConnection urlConnection;
 
-//            SPRÓBUJ OGARNĄC DWA URLE W JEDNYM I RETURNOWAC JEDNA RZECZ
+//           PRZESLIJ DO ONPOSTEXECUTE ID ARTYKULOW
+//           A W ONPOSTEXECUTE OGARNIJ TE 10 ARTYKULOW Z ODPOWIEDNIM ID (REGEXP) I PARSUJ JSONA
             try {
                 url = new URL(urls[0]);
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -48,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
                     data = reader.read();
                 }
 
-
                 return result.toString();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -58,45 +56,42 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
-            if (dlStoryIdEqualsTrue) {
+            if (dlArticleIdEqualsTrue) {
                 try {
-                    JSONArray jsonURLStoriesArray = new JSONArray(s);
+                    JSONArray jsonURLArticlesArray = new JSONArray(s);
                     for (int i = 0; i < 10; i++) {
-                        id[i] = jsonURLStoriesArray.getString(i);
+                        id[i] = jsonURLArticlesArray.getString(i);
                         System.out.println(id[i]);
-                        dlStoryIdEqualsTrue = false;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
 
-//                System.out.println("\n\n\nCALA TABLICA\n" + Arrays.toString(id));
-//                System.arraycopy(id,0,idCopy,0,1);
-            } else {
-                try {
-                    System.out.println("TEST ID[0] w else try " + id[0]);
-                    JSONObject jsonNews = new JSONObject(s);
-                    title = jsonNews.getString("title");
-                    System.out.println(title);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+            } //else {
+//                try {
+//                    System.out.println("TEST ID[0] w else try " + id[0]);
+//                    JSONObject jsonNews = new JSONObject(s);
+//                    title = jsonNews.getString("title");
+//                    System.out.println(title);
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
 
     }
 
-    public void downloadStoriesIDs() {
+    public void downloadNews() {
         DownloadTask task = new DownloadTask();
         try {
-            task.execute(urlStoriesID);
+            task.execute(urlArticlesID);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void downloadNews() {
-        System.out.println("TEST ID[0] w downloadnewsaaa " + Arrays.toString(id));
+//    public void downloadNews() {
+//        System.out.println("TEST ID[0] w downloadnewsaaa " + Arrays.toString(id));
 //        DownloadTask task = new DownloadTask();
 //        try {
 //            Pattern p = Pattern.compile("item/(.*?)\\.json?");
@@ -108,15 +103,13 @@ public class MainActivity extends AppCompatActivity {
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //        }
-    }
+//    }
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        downloadStoriesIDs();
         downloadNews();
-
     }
 }
