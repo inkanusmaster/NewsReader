@@ -3,6 +3,8 @@ package com.example.section7_appnewsreader;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -29,16 +31,27 @@ public class MainActivity extends AppCompatActivity {
 
     String urlArticlesID = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty";
     String urlNews = "https://hacker-news.firebaseio.com/v0/item/ENTERIDHERE.json?print=pretty";
-    String[] id = new String[10];
-    String[] urlArticleJSON = new String[10];
+    String[] id = new String[30];
+    String[] urlArticleJSON = new String[30];
     HashMap<String, String> titleUrlMap = new HashMap<>();
     SQLiteDatabase newsDatabase;
     ListView titlesListView;
     final ArrayList<String> titlesArrayList = new ArrayList<>();
-
+    ProgressDialog loading;
 
     @SuppressLint("StaticFieldLeak")
     public class DownloadTask extends AsyncTask<String, Void, HashMap<String, String>> {
+
+        protected void onPreExecute() {
+            loading= new ProgressDialog(MainActivity.this);
+            loading.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            loading.setTitle("Loading content");
+            loading.setMessage("Please wait...");
+            loading.setIndeterminate(true);
+            loading.setCanceledOnTouchOutside(false);
+            loading.show();
+        }
+
         @Override
         protected HashMap<String, String> doInBackground(String... urls) {
             StringBuilder resultArticleID = new StringBuilder();
@@ -60,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
 
                 JSONArray jsonURLArticlesArray = new JSONArray(resultArticleID.toString());
 
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 30; i++) {
                     id[i] = jsonURLArticlesArray.getString(i);
 
                     Pattern p = Pattern.compile("item/(.*?)\\.json?");
@@ -103,9 +116,7 @@ public class MainActivity extends AppCompatActivity {
 
         protected void onPostExecute(HashMap<String, String> hashMap) {
             super.onPostExecute(hashMap);
-
-
-
+            loading.dismiss();
             try {
                 Set entries = titleUrlMap.entrySet();
                 Iterator iterator = entries.iterator();
@@ -121,13 +132,9 @@ public class MainActivity extends AppCompatActivity {
 
                 @SuppressLint("Recycle") Cursor c = newsDatabase.rawQuery("SELECT * FROM news", null);
                 int titleIndex = c.getColumnIndex("title");
-                int urlIndex = c.getColumnIndex("url");
                 c.moveToFirst();
                 while (!c.isAfterLast()) {
                     titlesArrayList.add(c.getString(titleIndex));
-//                    System.out.println("TITLE " + c.getString(titleIndex));
-//                    System.out.println("URL " + c.getString(urlIndex));
-//                    System.out.println(" ");
                     c.moveToNext();
                 }
                 titlesListView = findViewById(R.id.titlesListView);
@@ -160,13 +167,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
         setContentView(R.layout.activity_main);
         createDatabase();
         downloadNews();
-
-
 
     }
 }
