@@ -1,17 +1,23 @@
 package com.example.section7_appnewsreader;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+
 import org.json.JSONArray;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,6 +33,9 @@ public class MainActivity extends AppCompatActivity {
     String[] urlArticleJSON = new String[10];
     HashMap<String, String> titleUrlMap = new HashMap<>();
     SQLiteDatabase newsDatabase;
+    ListView titlesListView;
+    final ArrayList<String> titlesArrayList = new ArrayList<>();
+
 
     @SuppressLint("StaticFieldLeak")
     public class DownloadTask extends AsyncTask<String, Void, HashMap<String, String>> {
@@ -95,6 +104,8 @@ public class MainActivity extends AppCompatActivity {
         protected void onPostExecute(HashMap<String, String> hashMap) {
             super.onPostExecute(hashMap);
 
+
+
             try {
                 Set entries = titleUrlMap.entrySet();
                 Iterator iterator = entries.iterator();
@@ -113,14 +124,20 @@ public class MainActivity extends AppCompatActivity {
                 int urlIndex = c.getColumnIndex("url");
                 c.moveToFirst();
                 while (!c.isAfterLast()) {
-                    System.out.println("TITLE " + c.getString(titleIndex));
-                    System.out.println("URL " + c.getString(urlIndex));
-                    System.out.println(" ");
+                    titlesArrayList.add(c.getString(titleIndex));
+//                    System.out.println("TITLE " + c.getString(titleIndex));
+//                    System.out.println("URL " + c.getString(urlIndex));
+//                    System.out.println(" ");
                     c.moveToNext();
                 }
+                titlesListView = findViewById(R.id.titlesListView);
+                final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, titlesArrayList);
+                titlesListView.setAdapter(arrayAdapter);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
 
         }
     }
@@ -136,15 +153,20 @@ public class MainActivity extends AppCompatActivity {
 
     public void createDatabase() {
         newsDatabase = this.openOrCreateDatabase("News", MODE_PRIVATE, null);
-        newsDatabase.execSQL("CREATE TABLE IF NOT EXISTS news (title VARCHAR, url VARCHAR)");
+        newsDatabase.execSQL("CREATE TABLE IF NOT EXISTS news (id INTEGER PRIMARY KEY, title VARCHAR, url VARCHAR)");
         newsDatabase.execSQL("DELETE FROM news");
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
         setContentView(R.layout.activity_main);
         createDatabase();
         downloadNews();
+
+
+
     }
 }

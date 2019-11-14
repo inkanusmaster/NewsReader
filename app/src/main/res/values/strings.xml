@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">News Reader by Fury</string>
+    <string name="header">Hacker News</string>
 </resources>
