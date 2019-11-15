@@ -1,20 +1,22 @@
 package com.example.section7_appnewsreader;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-
+import android.widget.Toast;
 import org.json.JSONArray;
-
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -31,19 +33,43 @@ public class MainActivity extends AppCompatActivity {
 
     String urlArticlesID = "https://hacker-news.firebaseio.com/v0/topstories.json?print=pretty";
     String urlNews = "https://hacker-news.firebaseio.com/v0/item/ENTERIDHERE.json?print=pretty";
-    String[] id = new String[30];
-    String[] urlArticleJSON = new String[30];
+    String[] id = new String[10];
+    String[] urlArticleJSON = new String[10];
     HashMap<String, String> titleUrlMap = new HashMap<>();
     SQLiteDatabase newsDatabase;
     ListView titlesListView;
     final ArrayList<String> titlesArrayList = new ArrayList<>();
     ProgressDialog loading;
 
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.options_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+    public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.refreshSite) {
+            titleUrlMap.clear();
+            titlesArrayList.clear();
+            titlesListView.setAdapter(null);
+            downloadNews();
+            return true;
+        }
+        else {
+        if (item.getItemId() == R.id.closeApp) {
+            android.os.Process.killProcess(android.os.Process.myPid());
+            return true;
+            }
+        }
+        return false;
+    }
+
     @SuppressLint("StaticFieldLeak")
     public class DownloadTask extends AsyncTask<String, Void, HashMap<String, String>> {
 
         protected void onPreExecute() {
-            loading= new ProgressDialog(MainActivity.this);
+            createDatabase();
+            loading = new ProgressDialog(MainActivity.this);
             loading.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             loading.setTitle("Loading content");
             loading.setMessage("Please wait...");
@@ -73,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
                 JSONArray jsonURLArticlesArray = new JSONArray(resultArticleID.toString());
 
-                for (int i = 0; i < 30; i++) {
+                for (int i = 0; i < 10; i++) {
                     id[i] = jsonURLArticlesArray.getString(i);
 
                     Pattern p = Pattern.compile("item/(.*?)\\.json?");
@@ -141,10 +167,17 @@ public class MainActivity extends AppCompatActivity {
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, titlesArrayList);
                 titlesListView.setAdapter(arrayAdapter);
 
+                titlesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                        Toast.makeText(MainActivity.this, titlesArrayList.get(i), Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
 
         }
     }
@@ -168,8 +201,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        createDatabase();
         downloadNews();
-
     }
 }
