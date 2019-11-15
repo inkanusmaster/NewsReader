@@ -1,9 +1,11 @@
 package com.example.section7_appnewsreader;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
@@ -16,7 +18,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import org.json.JSONArray;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -40,12 +44,14 @@ public class MainActivity extends AppCompatActivity {
     ListView titlesListView;
     final ArrayList<String> titlesArrayList = new ArrayList<>();
     ProgressDialog loading;
+    String select;
 
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuInflater = getMenuInflater();
         menuInflater.inflate(R.menu.options_menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
+
     public boolean onOptionsItemSelected(MenuItem item) {
         super.onOptionsItemSelected(item);
         if (item.getItemId() == R.id.refreshSite) {
@@ -54,11 +60,10 @@ public class MainActivity extends AppCompatActivity {
             titlesListView.setAdapter(null);
             downloadNews();
             return true;
-        }
-        else {
-        if (item.getItemId() == R.id.closeApp) {
-            android.os.Process.killProcess(android.os.Process.myPid());
-            return true;
+        } else {
+            if (item.getItemId() == R.id.closeApp) {
+                android.os.Process.killProcess(android.os.Process.myPid());
+                return true;
             }
         }
         return false;
@@ -105,10 +110,8 @@ public class MainActivity extends AppCompatActivity {
                     Pattern p = Pattern.compile("item/(.*?)\\.json?");
                     Matcher m = p.matcher(urlNews);
                     if (m.find()) {
-
                         urlNews = urlNews.replace(m.group(1), id[i]);
                         urlArticleJSON[i] = urlNews;
-
                         url2 = new URL(urlArticleJSON[i]);
                         urlConnection2 = (HttpURLConnection) url2.openConnection();
                         InputStream input = urlConnection2.getInputStream();
@@ -151,13 +154,15 @@ public class MainActivity extends AppCompatActivity {
                     Map.Entry entry = (Map.Entry) iterator.next();
                     Object title = entry.getKey();
                     Object url = entry.getValue();
-                    contentValues.put("title", String.valueOf(title));
+                    String changedTitle = String.valueOf(title);
+                    changedTitle = changedTitle.replace("'", "’");
+                    contentValues.put("title", changedTitle);
                     contentValues.put("url", String.valueOf(url));
                     newsDatabase.insert("news", null, contentValues);
                 }
 
                 @SuppressLint("Recycle") Cursor c = newsDatabase.rawQuery("SELECT * FROM news", null);
-                int titleIndex = c.getColumnIndex("title");
+                final int titleIndex = c.getColumnIndex("title");
                 c.moveToFirst();
                 while (!c.isAfterLast()) {
                     titlesArrayList.add(c.getString(titleIndex));
@@ -166,19 +171,26 @@ public class MainActivity extends AppCompatActivity {
                 titlesListView = findViewById(R.id.titlesListView);
                 final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(MainActivity.this, android.R.layout.simple_list_item_1, titlesArrayList);
                 titlesListView.setAdapter(arrayAdapter);
-
                 titlesListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @SuppressLint("Recycle")
                     @Override
                     public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                        Toast.makeText(MainActivity.this, titlesArrayList.get(i), Toast.LENGTH_SHORT).show();
-
+                        Intent intentWebReader = new Intent(getApplicationContext(), WebReader.class);
+                        select = "SELECT * FROM news WHERE title = '" + titlesArrayList.get(i) + "'";
+                        try {
+                            Cursor url = newsDatabase.rawQuery(select, null);
+                            int urlIndex = url.getColumnIndex("url");
+                            url.moveToFirst();
+                            intentWebReader.putExtra("URL:", url.getString(urlIndex));
+                            startActivity(intentWebReader);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                 });
-
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 
